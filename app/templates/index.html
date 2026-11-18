@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bio Tutor AI — NCERT Biology</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z" stroke-linejoin="round"/>
+            <path d="M12 12v9M4 7.5 12 12l8-4.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Bio Tutor AI</h1>
+          <p>NCERT Biology + general knowledge</p>
+        </div>
+      </div>
+
+      <div class="status" id="status">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">Checking…</span>
+      </div>
+
+      <section class="panel">
+        <header class="panel-head">
+          <h2>Documents</h2>
+          <span class="count" id="docCount">0</span>
+        </header>
+        <ul class="doc-list" id="docList"></ul>
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload documents" {% if read_only %}hidden{% endif %}>
+          <input type="file" id="fileInput" multiple hidden
+                 accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.xlsm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M12 16V4m0 0L7 9m5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round"/>
+          </svg>
+          <p><strong>Drop files</strong> or click to upload</p>
+          <small>PDF · DOCX · TXT · MD · CSV · XLSX</small>
+        </div>
+        <div class="upload-progress" id="uploadProgress" hidden>
+          <div class="spinner"></div>
+          <span id="uploadText">Indexing…</span>
+        </div>
+        <button id="reindexBtn" class="ghost-btn wide" type="button" {% if read_only %}hidden{% endif %}>↻ Rebuild index</button>
+        {% if read_only %}
+        <p class="read-only-note">Read-only demo · 14 NCERT Class 12 Biology books pre-indexed</p>
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <header class="panel-head"><h2>Settings</h2></header>
+        <label class="setting">
+          <span>Chunks retrieved <b id="topKVal">{{ default_top_k }}</b></span>
+          <input type="range" id="topK" min="2" max="12" step="1" value="{{ default_top_k }}">
+        </label>
+        <div class="setting">
+          <span>Answer style</span>
+          <div class="segment" id="mode" role="group" aria-label="Answer style">
+            <button type="button" data-mode="auto" class="{% if default_mode != 'docs' %}active{% endif %}">ChatGPT</button>
+            <button type="button" data-mode="docs" class="{% if default_mode == 'docs' %}active{% endif %}">Docs only</button>
+          </div>
+          <small class="setting-hint" id="modeHint">Documents first · general knowledge when needed</small>
+        </div>
+        <div class="setting">
+          <span>Answer model</span>
+          <div class="segment" id="quality" role="group" aria-label="Answer model quality">
+            <button type="button" data-quality="fast" class="active">Fast</button>
+            <button type="button" data-quality="strong">Strong</button>
+          </div>
+          <small class="setting-hint" id="qualityHint">fast · loading…</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="verifyToggle" {% if default_verify %}checked{% endif %}>
+          <span class="track"><span class="thumb"></span></span>
+          <span>Verify grounding<small id="verifyHint">runs in Docs-only mode</small></span>
+        </label>
+      </section>
+
+      <footer class="sidebar-footer">
+        <div class="model-line"><span class="dot mini"></span><span id="modelInfo">model…</span></div>
+        <p>Documents first: answers cite file and page when they use your files. General knowledge is labelled.</p>
+      </footer>
+    </aside>
+
+    <div class="overlay" id="overlay"></div>
+
+    <main class="chat">
+      <header class="chat-header">
+        <button class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+        <div class="chat-title">
+          <h2>Biology study assistant</h2>
+          <p id="chatSub">Ask anything — your NCERT books are used and cited when relevant.</p>
+        </div>
+        <div class="header-actions">
+          <span class="pill" id="providerPill" hidden>—</span>
+          <button class="ghost-btn small" id="newChatBtn" type="button">New chat</button>
+        </div>
+      </header>
+
+      <div class="messages" id="messages">
+        <div class="empty" id="emptyState">
+          <div class="empty-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z" stroke-linejoin="round"/>
+              <path d="M12 12v9M4 7.5 12 12l8-4.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3 id="emptyTitle">Ask your first question</h3>
+          <p id="emptyText">Ask anything. When your documents cover it, the answer cites the file and page. Otherwise you get a normal answer, labelled as general knowledge.</p>
+          <div class="suggestions" id="suggestions">
+            <button type="button" data-q="Give me a practice question from chapter 4.">Practice question · Chapter 4</button>
+            <button type="button" data-q="What is a test cross?">What is a test cross?</button>
+            <button type="button" data-q="Explain the lac operon in simple terms.">Explain the lac operon</button>
+            <button type="button" data-q="Write a short poem about the sea.">Write a poem about the sea</button>
+          </div>
+        </div>
+      </div>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <div class="composer-box">
+          <textarea id="question" rows="1" maxlength="4000"
+                    placeholder="Ask anything — or say “give me a question from chapter 4”…"></textarea>
+          <button type="submit" id="sendBtn" aria-label="Send question">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 12h14M13 6.5 18.5 12 13 17.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="composer-hint">
+          <span><kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line</span>
+          <span id="composerNote">Documents first · general knowledge labelled</span>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script>window.APP_READ_ONLY = {{ 'true' if read_only else 'false' }};</script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

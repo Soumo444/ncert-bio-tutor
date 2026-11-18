@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/chroma/
+data/manifest.json
+eval/reports/
+data/docs/*
+!data/docs/.gitkeep
+deploy/.staging/
+deploy/hf_token.txt
+deploy/render_token.txt
+deploy/github_token.txt
+deploy/paste_*.bat
+deploy/render_bundle.tar.gz
+cloudflared.exe

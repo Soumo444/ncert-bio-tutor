@@ -1,0 +1,23 @@
+[
+  {
+    "question": "What is the main idea of the first chapter?",
+    "expected_sources": ["lebo101.pdf"],
+    "expected_answer": "",
+    "must_contain": [],
+    "expect_refusal": false
+  },
+  {
+    "question": "How many chromosomes do human gametes contain?",
+    "expected_sources": ["lebo102.pdf"],
+    "expected_answer": "23",
+    "must_contain": ["23"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What is the current price of a Nimbus Enterprise licence?",
+    "expected_sources": [],
+    "expected_answer": "",
+    "must_contain": [],
+    "expect_refusal": true
+  }
+]

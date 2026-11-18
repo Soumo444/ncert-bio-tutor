@@ -1,0 +1,128 @@
+[
+  {
+    "question": "Explain double fertilisation in angiosperms.",
+    "expected_sources": ["lebo1dd/lebo101.pdf"],
+    "must_contain": ["endosperm"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What is apomixis and why is it useful for farmers?",
+    "expected_sources": ["lebo1dd/lebo101.pdf"],
+    "must_contain": ["apomixis", "seed"],
+    "expect_refusal": false
+  },
+  {
+    "question": "Trace the path of a sperm from the seminiferous tubules to the outside of the body.",
+    "expected_sources": ["lebo1dd/lebo102.pdf"],
+    "must_contain": ["epididymis", "vas deferens"],
+    "expect_refusal": false
+  },
+  {
+    "question": "Which hormones control the menstrual cycle and what does each one do?",
+    "expected_sources": ["lebo1dd/lebo102.pdf"],
+    "must_contain": ["progesterone", "ovulation"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What is amniocentesis and why is it banned for sex determination?",
+    "expected_sources": ["lebo1dd/lebo103.pdf"],
+    "must_contain": ["amniocentesis", "female foeticide"],
+    "expect_refusal": false
+  },
+  {
+    "question": "Describe any two assisted reproductive technologies used to treat infertility.",
+    "expected_sources": ["lebo1dd/lebo103.pdf"],
+    "must_contain": ["IVF", "embryo"],
+    "expect_refusal": false
+  },
+  {
+    "question": "State Mendel's law of segregation and explain what happens during meiosis.",
+    "expected_sources": ["lebo1dd/lebo104.pdf"],
+    "must_contain": ["segregation", "alleles"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What is a test cross and what does its result tell you about the genotype?",
+    "expected_sources": ["lebo1dd/lebo104.pdf"],
+    "must_contain": ["test cross", "homozygous"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What is the role of DNA ligase in DNA replication?",
+    "expected_sources": ["lebo1dd/lebo105.pdf"],
+    "must_contain": ["ligase", "join"],
+    "expect_refusal": false
+  },
+  {
+    "question": "Explain how the lac operon is switched on and off.",
+    "expected_sources": ["lebo1dd/lebo105.pdf"],
+    "must_contain": ["lac", "lactose"],
+    "expect_refusal": false
+  },
+  {
+    "question": "State the Hardy-Weinberg principle and name one factor that disturbs it.",
+    "expected_sources": ["lebo1dd/lebo106.pdf"],
+    "must_contain": ["hardy", "weinberg"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What is adaptive radiation? Give the example described in the textbook.",
+    "expected_sources": ["lebo1dd/lebo106.pdf"],
+    "must_contain": ["adaptive radiation", "finches"],
+    "expect_refusal": false
+  },
+  {
+    "question": "How is HIV transmitted and which cells does it attack?",
+    "expected_sources": ["lebo1dd/lebo107.pdf"],
+    "must_contain": ["HIV", "helper T"],
+    "expect_refusal": false
+  },
+  {
+    "question": "How do mycorrhizae help plants absorb nutrients?",
+    "expected_sources": ["lebo1dd/lebo108.pdf"],
+    "must_contain": ["mycorrhiza", "phosphorus"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What are restriction enzymes and why are they called molecular scissors?",
+    "expected_sources": ["lebo1dd/lebo109.pdf"],
+    "must_contain": ["restriction", "palindromic"],
+    "expect_refusal": false
+  },
+  {
+    "question": "How was Bt cotton made resistant to bollworm?",
+    "expected_sources": ["lebo1dd/lebo110.pdf"],
+    "must_contain": ["Bt", "toxin"],
+    "expect_refusal": false
+  },
+  {
+    "question": "Define population density and list the factors that increase or decrease it.",
+    "expected_sources": ["lebo1dd/lebo111.pdf"],
+    "must_contain": ["immigration", "emigration", "births", "deaths"],
+    "expect_refusal": false
+  },
+  {
+    "question": "Describe the steps of decomposition of detritus.",
+    "expected_sources": ["lebo1dd/lebo112.pdf"],
+    "must_contain": ["fragmentation", "humification"],
+    "expect_refusal": false
+  },
+  {
+    "question": "Explain the species-area relationship observed by Alexander von Humboldt.",
+    "expected_sources": ["lebo1dd/lebo113.pdf"],
+    "must_contain": ["species richness", "area"],
+    "expect_refusal": false
+  },
+  {
+    "question": "What is the current price of the Nimbus Enterprise licence?",
+    "expected_sources": [],
+    "must_contain": [],
+    "expect_refusal": true
+  },
+  {
+    "question": "Who won the 2026 FIFA World Cup final?",
+    "expected_sources": [],
+    "must_contain": [],
+    "expect_refusal": true
+  }
+]
