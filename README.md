@@ -182,6 +182,8 @@ with, and stop the tunnel when you are done sharing.
 
 **Live app: <https://ncert-bio-tutor.onrender.com>**
 
+Full application source (public): <https://github.com/Soumo444/ncert-bio-tutor>
+
 The app runs on **Render's free web service**: no credit card, 512 MB RAM (the
 container uses ~90 MB), and a permanent `https://...onrender.com` URL. Visitors
 can chat; uploads, reindexing and deletes are blocked (`READ_ONLY_MODE=true`) and
