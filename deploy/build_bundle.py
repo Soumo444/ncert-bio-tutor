@@ -14,7 +14,9 @@ Dockerfile:
 
     https://huggingface.co/datasets/Soumojit444/ncert-bio-tutor-deploy
 
-(replace `bundle.tar.gz` there), then trigger a manual deploy in Render.
+(replace `bundle.tar.gz` there), then trigger a deploy in Render with the build
+cache cleared: **Manual Deploy -> Clear build cache & deploy**. A normal deploy
+reuses the cached download layer and would keep serving the old code.
 """
 
 from __future__ import annotations

@@ -223,8 +223,9 @@ The tarball is used instead of a plain clone because Hugging Face LFS-tracks
 2. Upload the new `bundle.tar.gz` to the `ncert-bio-tutor-deploy` dataset
    (replace the existing file).
 
-3. Trigger a manual deploy: Render Dashboard → **Manual Deploy → Deploy latest
-   commit**, or simply wait for a rebuild if you changed the Dockerfile repo.
+3. Trigger a manual deploy: Render Dashboard → **Manual Deploy → Clear build
+   cache & deploy**. The cache must be cleared because Render otherwise reuses
+   the cached layer that downloads `bundle.tar.gz` and keeps the old code.
 
 The Dockerfile downloads the tarball again during the build. No application
 files are copied into the Docker build repository.
