@@ -214,26 +214,20 @@ The tarball is used instead of a plain clone because Hugging Face LFS-tracks
 
 ### Re-deploying after a code change
 
-1. Re-stage and rebuild the bundle (creates `deploy/render_bundle.tar.gz` and
-   refreshes `deploy/.staging/`):
+1. Build a fresh bundle (creates `deploy/bundle.tar.gz`, no PDFs or `.env`):
 
 ```bat
-.venv\Scripts\python.exe deploy\hf_deploy.py --stage-only
+.venv\Scripts\python.exe deploy\build_bundle.py
 ```
 
-2. Upload the new `bundle.tar.gz` to the `ncert-bio-tutor-deploy` dataset.
+2. Upload the new `bundle.tar.gz` to the `ncert-bio-tutor-deploy` dataset
+   (replace the existing file).
 
-3. Update the Render service (Dashboard → **Manual Deploy → Deploy latest commit**)
-   or run:
+3. Trigger a manual deploy: Render Dashboard → **Manual Deploy → Deploy latest
+   commit**, or simply wait for a rebuild if you changed the Dockerfile repo.
 
-```bat
-.venv\Scripts\python.exe deploy\render_deploy.py --repo https://github.com/Soumo444/ncert-bio-tutor-render
-```
-
-The script creates the service if needed, then waits for the build and verifies
-`/api/health` (706 chunks, 14 documents, read-only). Add `--skip-wait` to exit
-right after creation. It reads the API key from `deploy/render_token.txt`
-(git-ignored) or `--token rnd_...`.
+The Dockerfile downloads the tarball again during the build. No application
+files are copied into the Docker build repository.
 
 ### Free-plan behaviour
 
@@ -392,10 +386,10 @@ eval/
 ingest.py              CLI indexer
 start.bat              one-click start
 deploy/
-  render_deploy.py     one-command free deploy to Render
+  build_bundle.py      builds deploy/bundle.tar.gz (app + index) for Render
+  render_deploy.py     creates the Render web service and waits for it to go live
   render_repo/         Dockerfile + pinned requirements uploaded to GitHub
-  hf_deploy.py         stages the bundle and deploys to Hugging Face Spaces
-  hf_space/            original HF Dockerfile + Space metadata (kept for reference)
+  github_upload.py     syncs the three Dockerfile files to the build repository
 ```
 
 ---
