@@ -112,7 +112,15 @@ class ReindexRequest(BaseModel):
 # Helpers
 # --------------------------------------------------------------------------- #
 def _docs_summary() -> dict[str, Any]:
-    documents = store.list_documents()
+    # Never expose server filesystem paths to the browser.
+    documents = [
+        {
+            "source": item["source"],
+            "chunks": item["chunks"],
+            "pages": item["pages"],
+        }
+        for item in store.list_documents()
+    ]
     return {
         "documents": documents,
         "chunk_count": store.count(),
