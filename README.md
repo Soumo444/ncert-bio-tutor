@@ -1,416 +1,387 @@
-# AI study assistant over your documents
+# NCERT Bio Tutor AI
 
-Ask anything. The assistant searches your PDFs, Word files, text notes and
-spreadsheets first, cites the file and page when it uses them, and falls back to
-general knowledge when the documents do not cover the question — clearly
-labelled, like ChatGPT. A strict **Docs only** switch restores the original
-"answer only from the files" behaviour.
+A free AI study assistant for **NCERT Class 12 Biology**. Ask a question in
+plain English and get an answer built from the 14 NCERT PDFs — with the chapter
+and page cited.
 
-**Cloud, free, no model downloads.** Answers are written by a 120B open model on
-Groq's free tier; embeddings and the groundedness judge run on Google's free tier.
-Nothing heavy is installed on your PC.
+## 🚀 Live App
 
----
+### 👉 [**ncert-bio-tutor.onrender.com**](https://ncert-bio-tutor.onrender.com)
 
-## 1. The models (measured on this machine, Nov 2026)
+**No login. No install. Free to use on phone or desktop.**
 
-| Mode | Model | What actually happens |
-|---|---|---|
-| **Fast** (default) | `gpt-oss-120b` on Groq, `reasoning_effort=low` | ~1 s answers, strong 120B open model |
-| **Strong** (one click) | same model, `reasoning_effort=medium` + 3 000-token budget | thinks longer, better on multi-step questions |
-| Automatic fallback | Gemini 3.1 Flash Lite → Gemini 3.5 Flash | used when Groq is rate-limited |
-
-Measured facts about the free tier (they matter):
-
-* **Gemini Pro is not free.** On a new key the quota is literally `limit: 0` — requests
-  return 429 forever, no matter how long you wait.
-* **Gemini 3.8 Flash was returning 503** (overloaded) during setup; **3.5 Flash works
-  but took 30–80 s per answer**, which is unusable for chat.
-* **Groq `gpt-oss-120b` answers in ~1 s**, has a 131k context window and a free tier.
-  That is why it is the primary brain.
-* The **Gemini key is still essential**: it powers the embeddings
-  (`gemini-embedding-001`), which is fast and has a free quota.
-
-### Living within the free tiers
-
-* **Embeddings:** free tier counts every text as a request, 100/minute. Ingestion uses
-  batches of 30 with a 21 s pause, so ~700 chunks index in about 6 minutes without 429s.
-* **Groq answers:** 8 000 tokens/minute. When the window is exhausted the app waits for
-  the reset and retries (usually a few seconds) instead of silently switching to a slow model.
-* **Groundedness judge:** runs on Gemini, so it uses a separate quota and does not steal
-  tokens from the answering model.
-
-So "strong, free, fast" is satisfied by the pair, not by one vendor: Groq for
-generation, Gemini for embeddings (+ backup generation). If Groq's daily limit is
-hit, the app silently switches to Gemini and keeps working.
-
-Anyone who opens the web page can chat — they do **not** need a key or any setup.
+[Source code](https://github.com/Soumo444/ncert-bio-tutor) ·
+[Built with RAG, Groq and Gemini](#tech-stack)
 
 ---
 
-## Answer styles
+## What is this project?
 
-Pick a style in **Settings → Answer style**. The default is **ChatGPT**.
+This is a **Generative AI study assistant** built on top of the NCERT Class 12
+Biology textbooks. You ask a question, and instead of guessing, the app first
+searches the actual book pages and then asks an AI model to answer from them.
 
-| Style | Behaviour |
+That approach is called **RAG — Retrieval-Augmented Generation**. In simple
+words:
+
+> **Search the books first, then let the AI explain.**
+
+That is why the answer can show a citation like `lebo104.pdf · page 8` instead
+of inventing facts. If the books do not cover the question, the app can answer
+from general knowledge and clearly labels it.
+
+The project also supports **practice questions**, **chapter-wise quizzes**, and
+**grading of your written answers**.
+
+---
+
+## Features
+
+| Feature | What it does |
 |---|---|
-| **ChatGPT** (default) | Documents first. If the files cover the question, the answer cites file + page. Otherwise it answers normally and the UI shows a `general knowledge` badge. Unused PDF snippets are hidden. |
-| **Docs only** | Strict RAG. The assistant refuses when the files do not contain the answer. The groundedness judge runs only in this mode. |
-
-Things you can type:
-
-| Message | What happens |
-|---|---|
-| `hello` | Friendly reply, no retrieval and no model call |
-| `Give me a practice question from chapter 4.` | One exam-style question + answer from that chapter |
-| `What is a test cross?` | Answer with citations from the PDFs |
-| `Mendel crossed...` after a practice question | The bot grades your attempt and explains |
-| `Who won the 2026 FIFA World Cup final?` | General answer, labelled, no fake citations |
-
-Chapter requests understand both `chapter 4` and the chapter's topic, and
-`one more question` stays in the same chapter. The local chapter map covers the
-13 NCERT Biology chapters (`lebo101.pdf` … `lebo113.pdf`).
+| **Answers from the books** | Searches 706 indexed chunks from 14 NCERT PDFs and cites chapter + page |
+| **Two answer styles** | **ChatGPT** (books first, general knowledge fallback) or **Docs only** (strictly from the books) |
+| **Practice questions** | “Give me a practice question from chapter 4” |
+| **Quiz grading** | Write your answer, and the bot grades it and explains what you missed |
+| **Chapter-aware search** | Understands “chapter 4” or the chapter's topic and stays inside that chapter |
+| **General knowledge fallback** | Answers outside the books, clearly labelled — no fake citations |
+| **Streaming answers** | Text appears as it is generated, with sources shown first |
+| **Read-only public demo** | Visitors can chat, but cannot upload, reindex or delete anything |
 
 ---
 
-## 2. Install (once)
+## Try asking
 
-Requirements: Windows, Python 3.12 (the `start.bat` script installs it via `uv`).
+| Question | What happens |
+|---|---|
+| `What is a test cross?` | Answers from the PDFs with citations |
+| `Give me a practice question from chapter 4.` | Creates an exam-style question from that chapter |
+| `Explain the lac operon.` | Answers from the Molecular Basis of Inheritance chapter |
+| `Who won the 2026 FIFA World Cup final?` | General answer, labelled `general knowledge` |
+| `hello` | Friendly reply, no search and no model call |
+
+---
+
+## How it works
+
+```text
+Your question
+     │
+     ▼
+Search the 14 NCERT PDFs (706 chunks)
+     │
+     ▼
+Pick the 6 most useful passages
+     │
+     ▼
+Groq writes the answer (Gemini as backup)
+     │
+     ▼
+Answer + chapter/page citations
+```
+
+1. **Indexing (one time):** each PDF is split into small overlapping chunks.
+   Every chunk is converted into a vector (an embedding) and stored in ChromaDB.
+2. **Retrieval:** your question is converted into a vector too, and the closest
+   chunks are selected. A re-ranking step keeps the results relevant and avoids
+   near-duplicate passages.
+3. **Generation:** Groq's `gpt-oss-120b` writes the answer using those chunks.
+   If Groq is rate-limited, the app automatically falls back to Gemini.
+4. **Verification:** in Docs-only mode, a second AI call checks whether the
+   answer is actually supported by the passages.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | Custom HTML, CSS and JavaScript (no framework) |
+| **Backend** | FastAPI (Python 3.12) |
+| **Vector database** | ChromaDB |
+| **Embeddings** | Google Gemini (`gemini-embedding-001`) |
+| **Answer model** | Groq `openai/gpt-oss-120b` |
+| **Fallback model** | Gemini 3.1 Flash Lite → Gemini 3.5 Flash |
+| **Hosting** | Render free web service (Docker) |
+| **Deployment bundle** | Public Hugging Face dataset |
+
+---
+
+## Run it locally
+
+### 1. Requirements
+
+- Windows (the helper scripts are `.bat` files)
+- Python 3.12
+- Free **Groq** and **Gemini** API keys
+
+### 2. Install
 
 ```bat
-cd "F:\AI  CHATBOT RAG"
+git clone https://github.com/Soumo444/ncert-bio-tutor.git
+cd ncert-bio-tutor
+
 uv venv --python 3.12 .venv
 uv pip install --python .venv\Scripts\python.exe -r requirements.txt
 copy .env.example .env
 ```
 
-### Add your two free API keys
+### 3. Add your free API keys
 
-Both are free, no credit card:
+| Key | Purpose | Get it from |
+|---|---|---|
+| `GROQ_API_KEY` | Writes the answers | <https://console.groq.com/keys> |
+| `GEMINI_API_KEY` | Creates embeddings + runs the answer check | <https://aistudio.google.com/apikey> |
 
-1. **Groq** writes the answers — <https://console.groq.com/keys> → *Create API key*.
-2. **Gemini** makes the embeddings and runs the groundedness judge —
-   <https://aistudio.google.com/apikey>.
+Put them in `.env`:
 
-Paste them into `.env`:
-
-```
+```env
 GROQ_API_KEY=gsk_...
 GEMINI_API_KEY=AQ...
 ```
 
-The app needs both: Gemini turns your documents into vectors, Groq writes the
-answer. Neither key is ever sent to the browser.
+Both are free and need no credit card. The keys stay on the server and are
+never sent to the browser.
 
-Optional third provider: <https://openrouter.ai/keys> → `OPENROUTER_API_KEY=`.
+### 4. Add the PDFs
 
----
+The repository does **not** include the PDFs (they are ~160 MB). Download the
+NCERT Class 12 Biology books and place them here:
 
-## 3. Add documents
-
-Put files in `data\docs\` (subfolders allowed):
-
-```
-data\docs\biology\chapter1.pdf
-data\docs\notes.md
-data\docs\prices.xlsx
+```text
+data\docs\lebo1dd\lebo101.pdf
+data\docs\lebo1dd\lebo102.pdf
+...
 ```
 
-Supported: **PDF, DOCX, TXT, MD, CSV, XLSX**. You can also drag-and-drop in the UI.
+Subfolders are allowed. Supported formats: **PDF, DOCX, TXT, MD, CSV, XLSX**.
 
-## 4. Index them
+### 5. Build the index
 
 ```bat
 .venv\Scripts\python.exe ingest.py
 ```
 
-```
-> lebo101.pdf (35.1 MB) parsing...
-> lebo101.pdf: 25 page(s) -> 69 chunks, embedding...
-  + lebo101.pdf: stored 69 chunks
-```
-
-Unchanged files are skipped on the next run. Flags:
+For the 14 NCERT books this creates **706 chunks**. Unchanged files are skipped
+on later runs.
 
 | Command | Effect |
 |---|---|
-| `ingest.py --force` | re-embed everything |
-| `ingest.py --reset` | wipe the index first |
-| `ingest.py --file x.pdf` | ingest one file |
-| `ingest.py --chunk-size 700 --overlap 120` | experiment with chunking |
+| `ingest.py --force` | Re-embed everything |
+| `ingest.py --reset` | Wipe the index first |
+| `ingest.py --file lebo104.pdf` | Index one file |
+| `ingest.py --chunk-size 700 --overlap 120` | Try different chunking |
 
-## 5. Run
+### 6. Start the app
 
 ```bat
 start.bat
 ```
 
-or
+Or run it directly:
 
 ```bat
 .venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open <http://127.0.0.1:8000>.
-
-To let others on your Wi-Fi use it: change `HOST=0.0.0.0` in `.env` and give them
-`http://YOUR-PC-IP:8000` (allow port 8000 through Windows Firewall).
-
-To share it over the internet, double-click **`share.bat`** (or run it from a
-terminal). It starts the server if needed, creates the free tunnel, and prints a
-public link:
-
-```bat
-share.bat
-```
-
-Or do it manually while the server is running:
-
-```bat
-cloudflared tunnel --url http://127.0.0.1:8000
-```
-
-The first run downloads `cloudflared.exe` once. Cloudflare prints a public
-`https://...trycloudflare.com` link you can send to anyone. The link changes each
-time you start the tunnel. Anyone with the link can chat (no key or install
-needed) and can also see your documents, so only share links you are comfortable
-with, and stop the tunnel when you are done sharing.
+Open **<http://127.0.0.1:8000>**.
 
 ---
 
-## 5b. Deploy free on Render (live)
+## Deployment
 
-**Live app: <https://ncert-bio-tutor.onrender.com>**
+### Live app
 
-Full application source (public): <https://github.com/Soumo444/ncert-bio-tutor>
+**<https://ncert-bio-tutor.onrender.com>**
 
-The app runs on **Render's free web service**: no credit card, 512 MB RAM (the
-container uses ~90 MB), and a permanent `https://...onrender.com` URL. Visitors
-can chat; uploads, reindexing and deletes are blocked (`READ_ONLY_MODE=true`) and
-each IP is limited to 60 questions per hour (`RATE_LIMIT_PER_HOUR=60`).
+### How it is hosted
 
-Hugging Face Docker Spaces were the original plan, but free `cpu-basic` Docker
-Spaces now require a paid PRO subscription (`402 Payment Required`), so Render is
-used instead.
+The public version runs on **Render's free plan**:
 
-### How the deployment is wired
+- No credit card
+- 512 MB RAM (the app uses about 90 MB)
+- Permanent `https://...onrender.com` address
+- Sleeps after **15 minutes** without visitors; the next visit takes about
+  **1 minute** to wake up
 
-The service builds from a tiny public GitHub repository that contains only the
-Dockerfile and pinned requirements:
+The public deployment is **read-only**:
 
+- Uploads, reindexing and deletes return **HTTP 403**
+- Each visitor is limited to **60 questions per hour**
+- The PDFs themselves are not downloadable
+
+### Deployment architecture
+
+```text
+GitHub repo (Dockerfile only)
+        │
+        ▼
+Render builds a Docker image
+        │
+        ▼
+Docker downloads the 4.8 MB app bundle
+(app + 706-chunk index, no PDFs, no keys)
+        │
+        ▼
+FastAPI starts with Uvicorn
+        │
+        ▼
+https://ncert-bio-tutor.onrender.com
 ```
-https://github.com/Soumo444/ncert-bio-tutor-render
-```
 
-During the Docker build, the Dockerfile downloads the 4.8 MB application bundle
-(app + 706-chunk Chroma index, no PDFs, no `.env`) from the public dataset:
+The bundle is stored in a public Hugging Face dataset:
 
-```
-https://huggingface.co/datasets/Soumojit444/ncert-bio-tutor-deploy
-```
+<https://huggingface.co/datasets/Soumojit444/ncert-bio-tutor-deploy>
 
-The tarball is used instead of a plain clone because Hugging Face LFS-tracks
-`data/chroma/chroma.sqlite3` and would otherwise deliver pointer files.
+### Updating the live app
 
-### Re-deploying after a code change
-
-1. Build a fresh bundle (creates `deploy/bundle.tar.gz`, no PDFs or `.env`):
+1. Build a fresh bundle:
 
 ```bat
 .venv\Scripts\python.exe deploy\build_bundle.py
 ```
 
-2. Upload the new `bundle.tar.gz` to the `ncert-bio-tutor-deploy` dataset
+2. Upload the new `deploy\bundle.tar.gz` to the Hugging Face dataset
    (replace the existing file).
 
-3. Trigger a manual deploy: Render Dashboard → **Manual Deploy → Clear build
-   cache & deploy**. The cache must be cleared because Render otherwise reuses
-   the cached layer that downloads `bundle.tar.gz` and keeps the old code.
+3. In Render, choose **Manual Deploy → Clear build cache & deploy**.
 
-The Dockerfile downloads the tarball again during the build. No application
-files are copied into the Docker build repository.
+> **Important:** clearing the cache is required. Otherwise Render reuses the
+> old download layer and keeps serving the previous version.
 
-### Free-plan behaviour
+The Docker build repository is separate and contains only the Dockerfile and
+pinned requirements:
 
-* The service **sleeps after 15 minutes without traffic** and wakes on the next
-  request (~1 minute cold start). The URL never changes.
-* **750 instance hours/month** are included, which is enough for one always-on
-  service. A free uptime pinger (e.g. UptimeRobot, 5-minute HTTP check on
-  `/api/health`) keeps it warm.
-* The filesystem is ephemeral: everything is rebuilt from the image, which is
-  why the index is baked into the bundle rather than uploaded at runtime.
-
-### After deploying
-
-The Render API key and the GitHub/Hugging Face tokens are only needed to create
-or update the deployment. Revoke them once you are done:
-
-* Render: <https://dashboard.render.com/u/settings?add-api-key>
-* GitHub: <https://github.com/settings/tokens>
-* Hugging Face: <https://huggingface.co/settings/tokens>
-
-The live app keeps running without any of them.
+<https://github.com/Soumo444/ncert-bio-tutor-render>
 
 ---
 
-## 6. How it works
+## API
 
-```
-PDF/DOCX/CSV ──parse──> pages ──chunk──> 900-char chunks
-                                              │
-                                     embed (Gemini)
-                                              │
-                                        ChromaDB (local)
-                                              │
-question ──embed──> vector search (top 24) ──> MMR rerank ──> 6 chunks
-                                                              │
-                                  ChatGPT mode: docs first, general fallback
-                                  Docs-only mode: grounded prompt + citations
-                                                              │
-                                          Groq gpt-oss-120b (fallback: Gemini)
-                                                              │
-                                 groundedness judge (Docs-only mode)
-```
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | App status, models, chunk and document counts |
+| `POST` | `/api/chat` | Stream an answer (SSE) with citations |
+| `GET` | `/api/documents` | List indexed documents |
+| `POST` | `/api/upload` | Upload a document (blocked in the public demo) |
+| `POST` | `/api/reindex` | Rebuild the index (blocked in the public demo) |
+| `DELETE` | `/api/documents/{path}` | Delete a document (blocked in the public demo) |
 
-### Chunking — `rag/chunking.py`
-- Splits on paragraph → line → sentence → word boundaries, so sentences stay whole.
-- 900 characters per chunk, 150 characters overlap (an answer on a boundary appears fully in one chunk).
-- Each chunk gets a **context header** (`file | page 12 | section: Refunds`) that is embedded
-  with the text and shown in the prompt.
+Chat is a **streaming** response. Each event is a JSON line beginning with
+`data:`, ending with a `done` event that contains the citations and the model
+used.
 
-### Retrieval — `rag/retriever.py`
-- Cosine similarity in Chroma, `MIN_SCORE=0.20` drops nothing but the weakest chunks.
-- **MMR** (Maximal Marginal Relevance) re-ranks 24 candidates into 6 that are relevant
-  *and* different from each other — avoids six near-duplicate paragraphs.
-- **Chapter filter:** a named chapter (`chapter 4`) restricts retrieval to that file, so
-  practice questions really come from the chapter the user asked for.
-- If nothing clears the threshold, **Docs only** refuses; **ChatGPT** mode answers from
-  general knowledge instead of pretending the files matched.
+---
 
-### Hallucination mitigation — `rag/prompts.py`, `rag/pipeline.py`
-1. **Docs only** allows only the numbered context blocks; **ChatGPT** tells the model to
-   ignore irrelevant context and never invent a citation.
-2. Every document fact must carry a citation `[2]`; the UI resolves it to file + page.
-3. **Docs only** uses a fixed refusal string when the context lacks the answer (tested in
-   the eval set). **ChatGPT** labels general-knowledge answers and hides unused snippets.
-4. Documents are treated as data, not instructions (prompt-injection defence).
-5. In **Docs only**, a second **judge call** on Gemini (separate free quota) scores
-   faithfulness and flags unsupported claims — shown as a green / amber / red badge.
+## Evaluation
 
-### Evaluation — `eval/run_eval.py`
-Build a question set, then measure instead of guessing:
-
-| Metric | Meaning |
-|---|---|
-| `hit@k` | did the right document appear in the top-k? |
-| `MRR` | how high did the first correct chunk rank? |
-| `precision@k` | how much of the retrieved context was relevant? |
-| `context recall` | how many expected documents were found? |
-| `faithfulness` | are all answer claims supported by context? (LLM judge) |
-| `answer relevance` | does the answer address the question? |
-| `keyword recall` | did expected facts appear in the answer? |
-| `abstention accuracy` | does it correctly refuse unanswerable questions? |
+The app includes an evaluation script so retrieval quality is measured, not
+guessed.
 
 ```bat
-:: retrieval only - instant, no LLM calls
+:: Retrieval only - instant, no LLM calls
 .venv\Scripts\python.exe eval\run_eval.py --retrieval-only
 
-:: full run: answers + LLM judge, paced for the free tier
+:: Full run with answers and the AI judge
 .venv\Scripts\python.exe eval\run_eval.py --pause 35
-
-:: your own questions
-.venv\Scripts\python.exe eval\generate_questions.py --count 20
 ```
 
-`eval\questions.json` ships with 21 hand-written questions mapped to the chapters,
-including two questions the documents cannot answer (abstention tests). Reports are
-written to `eval\reports\report-*.md`.
-
-### Measured results (your 14 PDFs, 706 chunks, Nov 2026)
+### Results for the 14 NCERT PDFs (706 chunks)
 
 | Metric | Score |
-|---|---|
-| hit@6 | 1.00 |
-| MRR | 0.974 |
-| precision@6 | 0.78 |
-| context recall | 1.00 |
-| faithfulness | 1.00 |
-| answer relevance | 1.00 |
-| keyword recall | 1.00 |
-| abstention accuracy | 1.00 |
+|---|---:|
+| hit@6 (right chapter in the top 6) | **1.00** |
+| MRR (rank of the first correct chunk) | **0.974** |
+| precision@6 | **0.78** |
+| context recall | **1.00** |
+| faithfulness | **1.00** |
+| answer relevance | **1.00** |
+| keyword recall | **1.00** |
+| abstention accuracy | **1.00** |
 
-The correct chapter ranked **#1 for 18 of 19** answerable questions and **#2** for the
-other. Precision is below 1 because chapters genuinely overlap (e.g. the biotechnology
-chapter mentions apomixis), not because retrieval picks wrong documents.
-
-Full report: `eval\reports\report-20261118-151450.md`.
+The correct chapter ranked **#1 for 18 of 19** answerable questions and **#2**
+for the other. Precision is below 1 because chapters naturally overlap, not
+because retrieval picks wrong documents.
 
 ---
 
-## 7. Experiments that teach the concepts
+## Project structure
 
-Change one thing, re-run `ingest.py --force` + `eval\run_eval.py`, compare the report.
-
-| Experiment | Change | What to watch |
-|---|---|---|
-| Chunk size | `CHUNK_SIZE=400` vs `1600` | small = precise but fragmented; large = context but noisy |
-| Overlap | `CHUNK_OVERLAP=0` vs `300` | boundary questions fail without overlap |
-| No MMR | `USE_MMR=false` | duplicate chunks crowd out the right one |
-| Strict threshold | `MIN_SCORE=0.45` | fewer wrong sources, more refusals |
-| Strict grounding | `TEMPERATURE=0` | more consistent, less paraphrase |
-| Bigger context | `TOP_K=3` vs `10` | recall up, distraction up, latency up |
-
----
-
-## 8. Project map
-
-```
+```text
 app/
-  main.py              FastAPI routes: chat (SSE), upload, documents, reindex, health
-  templates/index.html chat UI
-  static/style.css     design
-  static/app.js        streaming, citations, sources panel
+  main.py              FastAPI routes: chat, upload, documents, health
+  templates/index.html Chat page
+  static/style.css     Design
+  static/app.js        Streaming, citations, sources panel
+
 rag/
-  config.py            all settings from .env
-  loaders.py           PDF (PDFium), DOCX, TXT/MD, CSV, XLSX
-  chunking.py          structure-aware splitter + context headers
-  embeddings.py        Gemini embeddings, batching, retry/backoff
-  store.py             ChromaDB persistence, delete/reindex
-  retriever.py         vector search + MMR + score cutoff
-  llm.py               Gemini / Groq / OpenRouter / Ollama with fallback
-  prompts.py           grounded system prompt, judge prompt
-  pipeline.py          retrieve → answer → cite → verify
-eval/
-  generate_questions.py
-  run_eval.py
-  questions.json       your test set
-ingest.py              CLI indexer
-start.bat              one-click start
+  config.py            Settings loaded from .env
+  loaders.py           PDF, DOCX, TXT/MD, CSV and XLSX readers
+  chunking.py          Splits documents into overlapping chunks
+  embeddings.py        Gemini embeddings with batching and retries
+  store.py             ChromaDB storage
+  retriever.py         Vector search + MMR re-ranking
+  llm.py               Groq, Gemini, OpenRouter and Ollama fallback
+  prompts.py           Answer and judge prompts
+  pipeline.py          Retrieve → answer → cite → verify
+
+eval/                  Evaluation scripts and question set
+ingest.py              Command-line indexer
+start.bat              One-click local start
+share.bat              Temporary public link (optional)
+
 deploy/
-  build_bundle.py      builds deploy/bundle.tar.gz (app + index) for Render
-  render_deploy.py     creates the Render web service and waits for it to go live
-  render_repo/         Dockerfile + pinned requirements uploaded to GitHub
-  github_upload.py     syncs the three Dockerfile files to the build repository
+  build_bundle.py      Builds the app + index bundle for Render
+  render_deploy.py     Creates the Render service
+  render_repo/         Dockerfile and pinned requirements
+  github_upload.py     Syncs the Dockerfile files to GitHub
 ```
 
 ---
 
-## 9. Troubleshooting
+## Troubleshooting
 
-| Symptom | Fix |
+| Problem | Fix |
 |---|---|
-| `GEMINI_API_KEY is missing` | paste the key in `.env` and restart (needed for embeddings) |
-| `429` / `RESOURCE_EXHAUSTED` on Groq | free per-minute token cap; the app now waits for the reset and retries, then falls back |
-| `429` on Gemini **Pro** | Pro has zero free quota — Fast/Strong use Groq instead |
-| PDF returns no text | scanned/image PDF — needs OCR (not included) |
-| Answers say "couldn't find that" | check the document is indexed (`/api/documents`), lower `MIN_SCORE` |
-| Slow first answer | cold start + embedding round-trip; later answers are faster |
-| Port already in use | change `PORT=8000` in `.env` |
+| `GEMINI_API_KEY is missing` | Add the key to `.env` and restart |
+| Groq answers are slow or use Gemini | Groq's free daily quota is finished; the app switched to the slower backup |
+| `429` from Groq | Free per-minute limit; the app waits and retries automatically |
+| PDF returns no text | The PDF is scanned images; OCR is not included |
+| “Couldn't find that” | Check the document is indexed (`/api/documents`) or lower `MIN_SCORE` |
+| First visit is slow | Render was asleep; free services wake in about 1 minute |
+| Port 8000 already in use | Change `PORT` in `.env` |
 
 ---
 
-## 10. Notes on free tiers
+## Free-tier notes
 
-Free-tier quotas change; the app fails over instead of breaking. For a public deployment
-with many users, put a key on a server, add auth/rate limiting, and expect to move to a
-paid tier eventually — Gemini Flash costs cents per thousand questions at that scale.
+- **Groq** answers roughly **80–100 simple questions per day** across the whole
+  public app. Long chats and Strong mode use more.
+- When the Groq daily limit is reached, the app **automatically switches to
+  Gemini**. The site keeps working, but answers take longer.
+- **Gemini** is also used for embeddings and the groundedness check.
+- Render's free service sleeps after 15 minutes idle. A free uptime monitor
+  (for example UptimeRobot checking `/api/health` every 5 minutes) keeps it warm.
+
+Quotas change over time. The app is designed to fall back instead of breaking.
+
+---
+
+## Notes and limitations
+
+- The index covers the **14 NCERT Class 12 Biology PDFs** supplied for this
+  project. Class 11 topics (for example osmosis) are answered as general
+  knowledge, without fake citations.
+- Scanned image-only PDFs need OCR before indexing.
+- The public demo is intentionally read-only and rate-limited.
+- This is a personal educational project, not an official NCERT product.
+
+---
+
+## Credits
+
+- **NCERT** — Class 12 Biology textbooks and chapter content.
+- **Groq** — free `gpt-oss-120b` inference.
+- **Google Gemini** — free embeddings and fallback generation.
+- **FastAPI**, **ChromaDB**, **Render** and **Hugging Face** — the open-source
+  and free-tier tools that make the project run.
